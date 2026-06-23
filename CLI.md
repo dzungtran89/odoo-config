@@ -35,6 +35,7 @@ $ odoo-config create [OPTIONS]
 * `--version TEXT`: Target Odoo version, e.g. 19.0  [required]
 * `-c, --config PATH`: [default: odoo.conf]
 * `--preset TEXT`
+* `--instance-dir PATH`: Instance home directory; derives data_dir, logfile and sentry_odoo_dir (lowest priority).
 * `--from TEXT`: Source config glob(s); additive
 * `--from-env`
 * `--env-prefix TEXT`
@@ -56,6 +57,7 @@ $ odoo-config update [OPTIONS]
 * `-c, --config PATH`: [default: odoo.conf]
 * `--version TEXT`
 * `--preset TEXT`
+* `--instance-dir PATH`: Instance home directory; derives data_dir, logfile and sentry_odoo_dir (lowest priority).
 * `--from-env`
 * `--env-prefix TEXT`
 * `--output-format TEXT`: [default: bare]
