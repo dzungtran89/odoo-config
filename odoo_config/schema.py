@@ -3,8 +3,12 @@
 import configparser
 import os
 import re
+import shlex
+import subprocess
 import sys
 from importlib.resources import files
+
+import typer
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -115,6 +119,26 @@ class _CaseSensitiveParser(configparser.ConfigParser):
         return optionstr
 
 
+def read_remote(path):
+    """Read a remote odoo.conf file from a <machine>:<path> pattern."""
+    machine, file = path.split(":")
+    args = ["ssh", machine, "cat", shlex.quote(file)]
+    result = subprocess.run(  # noqa: S603
+        args,
+        shell=False,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        err = (result.stderr or "").strip()
+        msg = f"Command failed (exit {result.returncode}): {path}"
+        if err:
+            msg = f"{msg}: {err}"
+        raise typer.BadParameter(msg)
+    return result.stdout
+
+
 def read_conf(path):
     """Parse an odoo.conf into (flat values, key->section map) across all sections.
 
@@ -124,7 +148,11 @@ def read_conf(path):
     # flat key namespace; a key duplicated across sections collapses
     # (last wins). Re-key by (section, key) if Odoo ever shares a name.
     cp = _CaseSensitiveParser()
-    cp.read(path)
+    if ":" in path:
+        content = read_remote(path)
+        cp.read_string(content)
+    else:
+        cp.read(path)
 
     values, sections = {}, {}
     for section in cp.sections():
