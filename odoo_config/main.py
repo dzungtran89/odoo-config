@@ -151,9 +151,14 @@ def _compare_columns(schema, presets, file_columns, versions, preset_names):
     return columns
 
 
+def _parse_key(path):
+    name = Path(path).name
+    return name if ":" not in path else path.split(":", 1)[0] + f":{name}"
+
+
 @app.command()
 def compare(
-    files: Annotated[list[Path] | None, typer.Argument()] = None,
+    files: Annotated[list[str] | None, typer.Argument()] = None,
     version: Annotated[str | None, typer.Option("--version", help="Version(s), comma-separated")] = None,
     preset: Annotated[str | None, typer.Option("--preset", help="Preset(s), comma-separated")] = None,
     all_: Annotated[bool, typer.Option("--all", "-a", help="Show every option, not just differing rows")] = False,
@@ -173,11 +178,11 @@ def compare(
     versions = [v.strip() for v in version.split(",")] if version else []
     preset_names = [p.strip() for p in preset.split(",")] if preset else []
 
-    missing = [str(p) for p in files or [] if not p.is_file()]
+    missing = [p for p in files or [] if not Path(p).is_file() and ":" not in p]
     if missing:
         raise typer.BadParameter(f"file(s) not found: {', '.join(missing)}")  # noqa: TRY003
 
-    file_columns = {path.name: read_conf(path)[0] for path in files or []}
+    file_columns = {_parse_key(path): read_conf(path)[0] for path in files or []}
 
     columns = _compare_columns(schema, presets, file_columns, versions, preset_names)
     if not columns:
