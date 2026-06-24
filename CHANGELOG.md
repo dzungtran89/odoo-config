@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.2.0 (2026-06-24)
+
+### Features
+
+- **compare**: With remote file(s)
+  ([`be4b940`](https://github.com/trobz/odoo-config/commit/be4b940f1c482a5842218cfdb009bc673dd60a1e))
+
+
 ## v0.1.0 (2026-06-19)
 
 ### Features
