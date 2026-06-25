@@ -416,7 +416,7 @@ wheels = [
 
 [[package]]
 name = "odoo-config"
-version = "0.2.0"
+version = "0.2.1"
 source = { editable = "." }
 dependencies = [
     { name = "tomli", marker = "python_full_version < '3.11'" },
