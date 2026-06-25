@@ -50,3 +50,21 @@ help:
 	[[print(f'\033[36m{m[0]:<20}\033[0m {m[1]}') for m in re.findall(r'^([a-zA-Z_-]+):.*?## (.*)$$', open(makefile).read(), re.M)] for makefile in ('$(MAKEFILE_LIST)').strip().split()]"
 
 .DEFAULT_GOAL := help
+
+.PHONY: docs
+docs: ## Build the documentation site
+	@echo "🚀 Building documentation site"
+	@uv run zensical build
+
+.PHONY: docs-serve
+docs-serve: ## Serve the documentation site locally
+	@echo "🚀 Serving documentation site"
+	@uv run zensical serve
+
+.PHONY: demo
+demo: ## Render site-docs/demo.tape → site-docs/docs/demo.gif via Docker VHS
+	@echo "🚀 Rendering demo GIF"
+	@docker run --rm \
+		-v $(PWD)/site-docs:/vhs \
+		-v $(PWD):/src:ro \
+		ghcr.io/charmbracelet/vhs:latest demo.tape
