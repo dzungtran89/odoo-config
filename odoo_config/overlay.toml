@@ -21,10 +21,6 @@ comment = "Master password for database operations. Keep this file secure."
 default = "True"
 mandatory = true
 
-[options.verbose]
-default = "False"
-mandatory = true
-
 [options.db_user]
 mandatory = true
 
@@ -141,6 +137,7 @@ mandatory = true
 [options.logrotate]
 default = "False"
 mandatory = true
+max_version = "11.0"
 
 [options.log_level]
 default = "debug_rpc"
