@@ -63,7 +63,8 @@ Full option reference: [CLI reference](CLI.md#odoo-config-expand).
 ## Clean
 
 Remove keys that are unknown to the schema or invalid for the
-target version. Safe to run after upgrading Odoo.
+target version. Safe to run after upgrading Odoo. Enterprise-only
+keys are dropped unless `--enterprise` is given.
 
 ```bash
 # Preview the cleaned config
@@ -74,6 +75,9 @@ odoo-config clean --version 17.0 odoo.conf --diff
 
 # Write the result back in place
 odoo-config clean --version 17.0 odoo.conf --inplace
+
+# Keep Enterprise-edition-only keys
+odoo-config clean --version 17.0 odoo.conf --enterprise
 ```
 
 Full option reference: [CLI reference](CLI.md#odoo-config-clean).
@@ -83,7 +87,8 @@ Full option reference: [CLI reference](CLI.md#odoo-config-clean).
 Display each option with its current value, help text, and version
 default. Useful for auditing or understanding an unfamiliar config.
 With `--version`, keys invalid for that version are hidden; without
-one, every key in the file is shown.
+one, every key in the file is shown. Enterprise-edition-only keys are
+hidden unless `--enterprise` is given.
 
 ```bash
 # Explain the default config file
@@ -91,6 +96,9 @@ odoo-config explain
 
 # Explain a specific file against a version
 odoo-config explain --version 16.0 legacy.conf
+
+# Include Enterprise-edition-only keys
+odoo-config explain --version 16.0 legacy.conf --enterprise
 ```
 
 Full option reference: [CLI reference](CLI.md#odoo-config-explain).

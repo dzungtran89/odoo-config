@@ -49,6 +49,10 @@ def test_version_filtering():
     assert valid_for_version(schema["longpolling_port"], "15.0")
     assert not valid_for_version(schema["longpolling_port"], "16.0")
 
+    # EE-only options are dropped for community (default), kept for enterprise
+    assert not valid_for_version(schema["database.expiration_date"], "19.0")
+    assert valid_for_version(schema["database.expiration_date"], "19.0", enterprise=True)
+
 
 def test_precedence():
     _, presets = load_schema()
@@ -75,6 +79,10 @@ def test_output_formats():
 
     full = build(schema, "19.0", "all", given)
     assert "db_maxconn" in full and "gevent_port" in full and "longpolling_port" not in full
+    assert "database.expiration_date" not in full  # EE-only
+
+    full_ee = build(schema, "19.0", "all", given, enterprise=True)
+    assert "database.expiration_date" in full_ee
 
 
 def test_render_round_trip():
@@ -110,11 +118,19 @@ def test_transforms():
 
     # invalid for the version -> dropped even when at its default
     assert "longpolling_port" not in drop_defaults({"longpolling_port": "8072"}, schema, "19.0")  # max 15
+    # compact keeps EE overlay keys (edition is not filtered here)
+    # -> `clean` drops them
+    ee = {"database.expiration_date": "x"}
+    assert drop_defaults(ee, schema, "19.0") == ee
 
     cleaned = drop_outdated(values, schema, "19.0")
     assert "bogus_opt" not in cleaned  # unknown -> dropped
     assert "workers" in cleaned
     assert "longpolling_port" not in drop_outdated({"longpolling_port": "8072"}, schema, "19.0")  # invalid >15
+
+    # EE-only key dropped for community, kept for enterprise
+    assert drop_outdated(ee, schema, "19.0") == {}
+    assert drop_outdated(ee, schema, "19.0", enterprise=True) == ee
 
     rows = {k: (help_text, default) for k, _v, help_text, default in explain_rows(values, schema, "19.0")}
     assert rows["workers"][1] == default_for(schema["workers"], "19.0")  # default surfaced
