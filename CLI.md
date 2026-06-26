@@ -10,6 +10,7 @@ $ odoo-config [OPTIONS] COMMAND [ARGS]...
 
 **Options**:
 
+* `-V, --version`: Show the tool&#x27;s version and exit.
 * `--install-completion`: Install completion for the current shell.
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
@@ -44,6 +45,7 @@ $ odoo-config create [OPTIONS]
 * `--from-env`
 * `--env-prefix TEXT`
 * `--output-format TEXT`: bare = only given keys; explicit = given + mandatory keys; all = every option valid for the version (optional ones commented).  [default: explicit]
+* `-E, --enterprise`: Include Enterprise-edition-only options.
 * `--help`: Show this message and exit.
 
 ## `odoo-config update`
@@ -65,6 +67,7 @@ $ odoo-config update [OPTIONS]
 * `--from-env`
 * `--env-prefix TEXT`
 * `--output-format TEXT`: bare = only given keys; explicit = given + mandatory keys; all = every option valid for the version (optional ones commented).  [default: bare]
+* `-E, --enterprise`: Include Enterprise-edition-only options.
 * `--help`: Show this message and exit.
 
 ## `odoo-config compare`
@@ -95,6 +98,7 @@ $ odoo-config compare [OPTIONS] [FILES]...
 * `--version TEXT`: Version(s), comma-separated
 * `--preset TEXT`: Preset(s), comma-separated
 * `-a, --all`: Show every option, not just differing rows
+* `-E, --enterprise`: Include Enterprise-edition-only options.
 * `--help`: Show this message and exit.
 
 ## `odoo-config compact`
@@ -137,11 +141,12 @@ $ odoo-config expand [OPTIONS] [CONFIG]
 * `--version TEXT`: Odoo version for defaults/validity; newest if omitted
 * `--diff`: Show only the keys the action adds/removes, as a table, not the full config
 * `-i, --inplace`: Write the result back to the input file
+* `-E, --enterprise`: Include Enterprise-edition-only options.
 * `--help`: Show this message and exit.
 
 ## `odoo-config clean`
 
-Remove options unknown to the schema or invalid for the version.
+Remove options unknown to the schema or invalid for the version/edition.
 
 **Usage**:
 
@@ -158,6 +163,7 @@ $ odoo-config clean [OPTIONS] [CONFIG]
 * `--version TEXT`: Odoo version for defaults/validity; newest if omitted
 * `--diff`: Show only the keys the action adds/removes, as a table, not the full config
 * `-i, --inplace`: Write the result back to the input file
+* `-E, --enterprise`: Include Enterprise-edition-only options.
 * `--help`: Show this message and exit.
 
 ## `odoo-config explain`
@@ -177,4 +183,5 @@ $ odoo-config explain [OPTIONS] [CONFIG]
 **Options**:
 
 * `--version TEXT`: Odoo version for defaults/validity; newest if omitted
+* `-E, --enterprise`: Include Enterprise-edition-only options.
 * `--help`: Show this message and exit.

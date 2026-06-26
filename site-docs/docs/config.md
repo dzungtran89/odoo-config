@@ -29,6 +29,9 @@ odoo-config create --version 17.0 --preset production \
 
 # Full annotated output: every key, optional ones commented
 odoo-config create --version 17.0 --output-format all
+
+# Include Enterprise-edition-only options (e.g. database.expiration_*)
+odoo-config create --version 17.0 --enterprise
 ```
 
 Full option reference: [CLI reference](CLI.md#odoo-config-create).

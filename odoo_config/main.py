@@ -1,6 +1,7 @@
 """odoo-config: generate, compare and update Odoo config files per version."""
 
 import glob
+import importlib.metadata
 from pathlib import Path
 from typing import Annotated
 
@@ -36,6 +37,10 @@ InstanceDirOpt = Annotated[
 ]
 FromEnvOpt = Annotated[bool, typer.Option("--from-env")]
 EnvPrefixOpt = Annotated[str | None, typer.Option("--env-prefix")]
+EnterpriseOpt = Annotated[
+    bool,
+    typer.Option("-E", "--enterprise", help="Include Enterprise-edition-only options."),
+]
 FormatOpt = Annotated[
     str,
     typer.Option(
@@ -112,7 +117,7 @@ def _generate(ctx, sources, secmap):
 
     instance_dir_vals = _instance_dir_defaults(p.get("instance_dir"))
     given = resolve_given(presets, p["preset"], [instance_dir_vals, sources], env, overrides)
-    built = build(schema, p["version"], p["output_format"], given)
+    built = build(schema, p["version"], p["output_format"], given, p.get("enterprise", False))
     # ctx.params holds click's pre-conversion values, so config is still a str.
     Path(p["config"]).write_text(render(built, schema, given, secmap))
 
@@ -128,6 +133,7 @@ def create(
     from_env: FromEnvOpt = False,
     env_prefix: EnvPrefixOpt = None,
     output_format: FormatOpt = "explicit",
+    enterprise: EnterpriseOpt = False,
 ):
     """Create a new config file for the target version."""
     sources, secmap = expand_from(from_)
@@ -145,6 +151,7 @@ def update(
     from_env: FromEnvOpt = False,
     env_prefix: EnvPrefixOpt = None,
     output_format: FormatOpt = "bare",
+    enterprise: EnterpriseOpt = False,
 ):
     """Update a config file in place from the given values, preserving existing keys."""
     existing, secmap = read_conf(config)
@@ -152,7 +159,7 @@ def update(
     typer.echo(f"Updated {config}")
 
 
-def _compare_columns(schema, presets, file_columns, versions, preset_names):
+def _compare_columns(schema, presets, file_columns, versions, preset_names, enterprise=False):
     """Assemble the named value columns to compare.
 
     Files contribute their values as written; each `--version` contributes a
@@ -163,9 +170,9 @@ def _compare_columns(schema, presets, file_columns, versions, preset_names):
     for v in versions:
         if preset_names:
             for name in preset_names:
-                columns[f"{v}+{name}"] = build(schema, v, "all", presets.get(name, {}))
+                columns[f"{v}+{name}"] = build(schema, v, "all", presets.get(name, {}), enterprise)
         else:
-            columns[v] = build(schema, v, "all", {})
+            columns[v] = build(schema, v, "all", {}, enterprise)
 
     if preset_names and not versions:
         for name in preset_names:
@@ -185,6 +192,7 @@ def compare(
     version: Annotated[str | None, typer.Option("--version", help="Version(s), comma-separated")] = None,
     preset: Annotated[str | None, typer.Option("--preset", help="Preset(s), comma-separated")] = None,
     all_: Annotated[bool, typer.Option("--all", "-a", help="Show every option, not just differing rows")] = False,
+    enterprise: EnterpriseOpt = False,
 ):
     """Show a comparison table of values across files, versions and/or presets.
 
@@ -207,7 +215,7 @@ def compare(
 
     file_columns = {_parse_key(path): read_conf(path)[0] for path in files or []}
 
-    columns = _compare_columns(schema, presets, file_columns, versions, preset_names)
+    columns = _compare_columns(schema, presets, file_columns, versions, preset_names, enterprise)
     if not columns:
         raise typer.BadParameter("Give file(s), --version and/or --preset")  # noqa: TRY003
 
@@ -339,11 +347,12 @@ def expand(
     version: ActionVersion = None,
     diff: DiffOpt = False,
     inplace: InplaceOpt = False,
+    enterprise: EnterpriseOpt = False,
 ):
     """Add every option valid for the version, keeping existing values."""
     schema, _ = load_schema()
     values, secmap = _read_required(config)
-    _output(config, values, secmap, build(schema, version, "all", values), schema, "expand", diff, inplace)
+    _output(config, values, secmap, build(schema, version, "all", values, enterprise), schema, "expand", diff, inplace)
 
 
 @app.command()
@@ -352,15 +361,20 @@ def clean(
     version: ActionVersion = None,
     diff: DiffOpt = False,
     inplace: InplaceOpt = False,
+    enterprise: EnterpriseOpt = False,
 ):
-    """Remove options unknown to the schema or invalid for the version."""
+    """Remove options unknown to the schema or invalid for the version/edition."""
     schema, _ = load_schema()
     values, secmap = _read_required(config)
-    _output(config, values, secmap, drop_outdated(values, schema, version), schema, "clean", diff, inplace)
+    _output(config, values, secmap, drop_outdated(values, schema, version, enterprise), schema, "clean", diff, inplace)
 
 
 @app.command()
-def explain(config: ActionConfig = Path("odoo.conf"), version: ActionVersion = None):
+def explain(
+    config: ActionConfig = Path("odoo.conf"),
+    version: ActionVersion = None,
+    enterprise: EnterpriseOpt = False,
+):
     """Show each option's value, help and default."""
     from rich import box
     from rich.console import Console
@@ -374,10 +388,32 @@ def explain(config: ActionConfig = Path("odoo.conf"), version: ActionVersion = N
     for col in ("setting", "value", "help", "default"):
         table.add_column(col, overflow="fold")
 
-    for key, value, help_text, default in explain_rows(values, schema, version):
+    for key, value, help_text, default in explain_rows(values, schema, version, enterprise):
         table.add_row(*(escape(str(c)) for c in (key, value, help_text, default)))
 
     Console().print(table)
+
+
+def version_callback(value: bool):
+    if value:
+        import sys
+
+        package_name = sys.modules[__name__].__package__ or __name__.split(".")[0]
+        typer.echo(importlib.metadata.version(package_name))
+
+        raise typer.Exit()
+
+
+@app.callback()
+def main(
+    version: Annotated[
+        bool | None,
+        typer.Option(
+            "-V", "--version", callback=version_callback, is_eager=True, help="Show the tool's version and exit."
+        ),
+    ] = None,
+):
+    pass
 
 
 if __name__ == "__main__":

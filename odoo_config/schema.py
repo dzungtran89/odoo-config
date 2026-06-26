@@ -103,8 +103,15 @@ def _vnum(version):
     return float(m.group(1)) if m else None
 
 
-def valid_for_version(meta, version):
-    """Whether an option applies to the given version (no filtering if version is None)."""
+def valid_for_version(meta, version, enterprise=False):
+    """Whether an option applies to the given version and edition.
+
+    Version is not filtered when None. Options tagged `edition = "enterprise"`
+    are dropped unless `enterprise` is set (community is the default edition).
+    """
+    if meta.get("edition") == "enterprise" and not enterprise:
+        return False
+
     v = _vnum(version)
     if v is None:
         return True
@@ -191,7 +198,7 @@ def default_for(meta, version):
     return meta.get("default", "")
 
 
-def build(schema, version, fmt, given):
+def build(schema, version, fmt, given, enterprise=False):
     """Resolve the option map to emit for a given output format.
 
     bare     -> only explicitly given keys
@@ -200,7 +207,7 @@ def build(schema, version, fmt, given):
     """
     out = {}
     for key, meta in schema.items():
-        if not valid_for_version(meta, version):
+        if not valid_for_version(meta, version, enterprise):
             continue
 
         if key in given:
@@ -258,15 +265,19 @@ def drop_defaults(values, schema, version):
 
     Keys invalid for the version are dropped — they don't exist in it, so no
     value is meaningful (matches `clean`/`expand`, which also honour validity).
+
     Keys the trobz overlay re-defaults or adds are kept: their default is not
     odoo's, so dropping them would silently fall back to odoo's stock value.
     Unknown keys (absent from the schema) are kept — no default to compare.
+
+    Edition validity is not checked here (compact keeps overlay keys); use
+    `clean` to drop options invalid for the version/edition.
     """
     overridden = overlay_overrides()
     out = {}
     for key, value in values.items():
         meta = schema.get(key)
-        if meta is not None and not valid_for_version(meta, version):
+        if meta is not None and not valid_for_version(meta, version, enterprise=True):
             continue
 
         if meta is not None and key not in overridden and canon(value) == canon(default_for(meta, version)):
@@ -277,12 +288,16 @@ def drop_defaults(values, schema, version):
     return out
 
 
-def drop_outdated(values, schema, version):
-    """Drop keys unknown to the schema or invalid for the version (clean)."""
-    return {key: value for key, value in values.items() if key in schema and valid_for_version(schema[key], version)}
+def drop_outdated(values, schema, version, enterprise=False):
+    """Drop keys unknown to the schema or invalid for the version/edition (clean)."""
+    return {
+        key: value
+        for key, value in values.items()
+        if key in schema and valid_for_version(schema[key], version, enterprise)
+    }
 
 
-def explain_rows(values, schema, version):
+def explain_rows(values, schema, version, enterprise=False):
     """(key, value, help, default) for each key present in `values`.
 
     Help is odoo's option description from the vendored snapshot (options.toml);
@@ -293,7 +308,7 @@ def explain_rows(values, schema, version):
     rows = []
     for key, value in values.items():
         meta = schema.get(key, {})
-        if meta and not valid_for_version(meta, version):
+        if meta and not valid_for_version(meta, version, enterprise):
             continue
 
         help_text = meta.get("comment") or meta.get("help") or ""

@@ -9,6 +9,7 @@
 #   section      target ini section (default "options")
 #   min_version  option only valid from this Odoo version up
 #   max_version  option only valid up to this Odoo version
+#   edition      "enterprise" -> only emitted with --enterprise / -E
 #
 # `mandatory` marks the trobz baseline: every option remoteoi's server.conf
 # writes uncommented. Commented examples (db_name, smtp_*) stay optional.
@@ -290,11 +291,13 @@ section = "ir.config_parameter"
 default = "demo"
 mandatory = true
 section = "ir.config_parameter"
+edition = "enterprise"
 
 [options."database.expiration_date"]
 default = "2099-12-31 12:34:56"
 mandatory = true
 section = "ir.config_parameter"
+edition = "enterprise"
 
 [options."channels"]
 mandatory = true
