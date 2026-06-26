@@ -2,6 +2,22 @@
 
 <!-- version list -->
 
+## v0.2.2 (2026-06-26)
+
+### Bug Fixes
+
+- **maintain**: Honour --version validity in compact/expand/explain
+  ([`d7249db`](https://github.com/trobz/odoo-config/commit/d7249dbcaee36311692d368803a5ec39b56dec81))
+
+- **overlay**: Drop deprecated verbose option, cap logrotate at 11.0
+  ([`e578222`](https://github.com/trobz/odoo-config/commit/e57822238fd3bed13a2783ec0d880f749a30e10d))
+
+### Documentation
+
+- **compact**: State that trobz-overlay values are kept
+  ([`a55529a`](https://github.com/trobz/odoo-config/commit/a55529aae215e1e8392e63e9f119f4eedf59451d))
+
+
 ## v0.2.1 (2026-06-25)
 
 ### Bug Fixes
